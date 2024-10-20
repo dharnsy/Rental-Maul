@@ -1,0 +1,52 @@
+<?php
+// Mulai session
+session_start();
+
+// Koneksi ke database
+$koneksi = new mysqli("localhost", "root", "", "rental");
+
+// Cek koneksi
+if ($koneksi->connect_error) {
+    die("Koneksi gagal: " . $koneksi->connect_error);
+}
+
+// Jika form login disubmit
+if (isset($_POST['submit'])) {
+    $username = $_POST['user'];
+    $password = $_POST['pass'];
+
+    // Proteksi terhadap SQL Injection
+    $username = mysqli_real_escape_string($koneksi, $username);
+    $password = mysqli_real_escape_string($koneksi, $password);
+
+    // Hash password yang dimasukkan (sesuaikan dengan format password di database)
+    // Jika password di database sudah di-hash menggunakan MD5, hapus komentar di baris berikut:
+    // $password = md5($password); 
+
+    // Query untuk mengecek user dan password
+    $sql = "SELECT * FROM user WHERE user='$username' AND pass='$password' LIMIT 1";
+    
+    // Debug query jika perlu
+    // echo $sql;
+
+    $result = $koneksi->query($sql);
+
+    if ($result->num_rows > 0) {
+        // Login sukses
+        $row = $result->fetch_assoc();
+        $_SESSION['user'] = $row['user'];
+        $_SESSION['level'] = $row['level'];
+
+        // Redirect sesuai level user
+        if ($row['level'] == 'admin') {
+            header("Location: admin_dashboard.php");
+        } else if ($row['level'] == 'petugas') {
+            header("Location: petugas_dashboard.php");
+        }
+        exit;
+    } else {
+        // Jika login gagal
+        echo "<script>alert('Username atau password salah!');</script>";
+    }
+}
+?>
